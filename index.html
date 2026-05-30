@@ -627,9 +627,9 @@ const LUUQADAHA = {
 // ══════════════════════════════════════════
 const DEFAULT_USERS = {
   maamul:{password:"maamul@2024",role:"maamul",label:"Maamulka"},
-  sare:  {password:"sare@2024",  role:"sare",  label:"Dugsiga Arqam"},
-  hoose1:{password:"hoose1@2024",role:"hoose1",label:"Xalaqaadka Arqam"},
-  kormeere:{password:"kormeere@2024",role:"kormeere",label:"Kormeere"},
+  sare:  {password:"sare@2024",  role:"sare",  faracs:["sare"],  label:"Dugsiga Arqam"},
+  hoose1:{password:"hoose1@2024",role:"hoose1",faracs:["hoose1"],label:"Xalaqaadka Arqam"},
+  kormeere:{password:"kormeere@2024",role:"kormeere",faracs:["sare","hoose1"],label:"Kormeere"},
 };
 let USERS = {...DEFAULT_USERS};
 
@@ -857,7 +857,9 @@ function doLogin(){
   if(usr && usr.password===p){
     currentUser = {...usr, username:u};
     document.getElementById("login-err").style.display="none";
-    activeFarac = (usr.role!=="maamul" && usr.role!=="kormeere") ? usr.role : "sare";
+    // Set activeFarac: use first farac from faracs array if available
+    const userFaracs = usr.faracs || (["maamul","kormeere"].includes(usr.role) ? Object.keys(FARAC_COLORS) : [usr.role]);
+    activeFarac = (["maamul","kormeere"].includes(usr.role)) ? "sare" : (userFaracs[0]||"sare");
     activeTab = "xisaab";
     document.getElementById("login-page").style.display="none";
     document.getElementById("app-page").classList.add("show");
@@ -1035,10 +1037,25 @@ function renderSidebar(){
       html += `<button class="sb-guud-btn ${activeTab==="maamul-settings"?"active":""}" onclick="selectMaamulSettings()" style="margin-top:4px;background:${activeTab==="maamul-settings"?'linear-gradient(135deg,#1565c0,#3b82f6)':'transparent'};color:${activeTab==="maamul-settings"?'#fff':'rgba(255,255,255,.75)'}">${L("tab_settings")}</button>`;
     }
   } else {
-    html += `<div class="non-maamul-badge" style="background:${FARAC_COLORS[currentUser.role]}">
-      <div class="label">${FARAC_LABELS[currentUser.role]}</div>
-      ${appData[currentUser.role]?.submitted?`<div class="sub">✅ ${L("msg_submitted").replace("📤 ","")}</div>`:""}
-    </div>`;
+    // For regular users: show accessible faracs as nav buttons
+    const userFaracs = currentUser.faracs || [currentUser.role];
+    const accessibleFaracs = userFaracs.filter(k=>FARAC_COLORS[k]);
+    if(accessibleFaracs.length > 1){
+      html += `<div class="sb-section-lbl">${L("nav_faracyada")}</div>`;
+      accessibleFaracs.forEach(k=>{
+        const activeClass = activeFarac===k ? `active-${k}` : "";
+        html += `<button class="sb-farac-btn ${activeClass}" onclick="selectFarac('${k}')">
+          <span style="display:flex;align-items:center;gap:7px"><span class="sb-dot" style="background:${FARAC_COLORS[k]}"></span>${FARAC_LABELS[k]}</span>
+          ${appData[k]?.submitted?"<span style='font-size:10px'>✅</span>":""}
+        </button>`;
+      });
+    } else {
+      const k = accessibleFaracs[0] || currentUser.role;
+      html += `<div class="non-maamul-badge" style="background:${FARAC_COLORS[k]||'#1a3a5c'}">
+        <div class="label">${FARAC_LABELS[k]||k}</div>
+        ${appData[k]?.submitted?`<div class="sub">✅ ${L("msg_submitted").replace("📤 ","")}</div>`:""}
+      </div>`;
+    }
   }
   if(activeFarac){
     html += `<div style="border-top:1px solid rgba(255,255,255,.1);margin-top:6px;padding-top:6px">
@@ -2447,30 +2464,44 @@ function addFasalNonMaamul(){
   renderAll();
 }
 function renderSettingsUsers(){
-  const roleBgColors = {maamul:"#1a3a5c",sare:"#0d6e4f",hoose1:"#4a1a6b",kormeere:"#1565c0"};
-  const roleLabels = {maamul:"Maamulka",sare:"Dugsiga Arqam",hoose1:"Xalaqaadka Arqam",kormeere:"Kormeere"};
-  const userList = Object.entries(USERS).map(([username, u])=>`
-    <div class="user-item">
+  const roleBgColors = {maamul:"#1a3a5c",sare:"#0d6e4f",hoose1:"#4a1a6b",kormeere:"#1565c0",farac:"#475569"};
+  const roleLabels = {maamul:"Maamulka",sare:"Dugsiga Arqam",hoose1:"Xalaqaadka Arqam",kormeere:"Kormeere",farac:"Farac User"};
+  const userList = Object.entries(USERS).map(([username, u])=>{
+    const userFaracs = u.faracs || (["maamul","kormeere"].includes(u.role) ? Object.keys(FARAC_COLORS) : [u.role]);
+    const faracBadges = userFaracs.filter(k=>FARAC_COLORS[k]).map(k=>`<span class="role-badge" style="background:${FARAC_COLORS[k]};margin-right:3px">${FARAC_LABELS[k]||k}</span>`).join("");
+    const roleBadge = ["maamul","kormeere"].includes(u.role)
+      ? `<span class="role-badge" style="background:${roleBgColors[u.role]||"#555"}">${roleLabels[u.role]||u.role}</span>`
+      : faracBadges;
+    return `<div class="user-item">
       <div class="user-item-info">
         <div class="user-item-name">👤 ${username}</div>
-        <div class="user-item-meta">
-          <span class="role-badge" style="background:${roleBgColors[u.role]||'#555'}">${roleLabels[u.role]||u.role}</span>
-          &nbsp;${u.label||""}
-          &nbsp;· 🔑 ${u.password}
+        <div class="user-item-meta" style="display:flex;flex-wrap:wrap;align-items:center;gap:3px">
+          ${roleBadge}
+          <span style="color:#94a3b8;font-size:11px">${u.label||""}</span>
+          <span style="color:#94a3b8;font-size:11px">· 🔑 ${u.password}</span>
         </div>
       </div>
       <div class="user-item-btns">
         <button class="btn-save" style="font-size:11px;padding:5px 10px;margin-right:4px" onclick="openEditUser('${username}')">✏️ Edit</button>
         <button class="btn-del-user" onclick="deleteUser('${username}')">🗑️</button>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 
   const roleOpts = [
     {v:"maamul",l:"Maamulka"},
-    {v:"sare",l:"Dugsiga Arqam"},
-    {v:"hoose1",l:"Xalaqaadka Arqam"},
+    {v:"farac",l:"Farac User (Dugsiga/Xalaqaadka)"},
     {v:"kormeere",l:"Kormeere (Daawasho Kaliya)"},
   ].map(r=>`<option value="${r.v}">${r.l}</option>`).join("");
+
+  const faracCheckboxes = Object.keys(FARAC_COLORS).map(k=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1.5px solid #e2e8f0;margin-bottom:7px;cursor:pointer;transition:.15s;background:#f8fafc;" onclick="this.style.borderColor=this.querySelector('input').checked?'#e2e8f0':'${FARAC_COLORS[k]}';this.style.background=this.querySelector('input').checked?'#f8fafc':'${FARAC_COLORS[k]}18'">
+      <input type="checkbox" name="new-user-farac" value="${k}" style="width:16px;height:16px;accent-color:${FARAC_COLORS[k]};cursor:pointer;flex-shrink:0;"/>
+      <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#1e293b;">
+        <span style="width:10px;height:10px;border-radius:50%;background:${FARAC_COLORS[k]};display:inline-block;flex-shrink:0;"></span>
+        ${FARAC_LABELS[k]}
+      </span>
+    </label>`).join("");
 
   return `<div class="settings-grid">
     <div>
@@ -2482,7 +2513,11 @@ function renderSettingsUsers(){
       <label class="form-lbl">Label (Magaca)</label>
       <input id="new-user-label" class="form-input" placeholder="tusaale: Maamulka 2"/>
       <label class="form-lbl">Role</label>
-      <select id="new-user-role" class="form-select">${roleOpts}</select>
+      <select id="new-user-role" class="form-select" onchange="toggleNewUserFaracSection(this.value)">${roleOpts}</select>
+      <div id="new-user-farac-section" style="display:none;margin-bottom:14px;">
+        <label class="form-lbl" style="margin-bottom:8px;">Faracyada u oggolow ✓</label>
+        ${faracCheckboxes}
+      </div>
       <button class="btn-add" onclick="addUser()">➕ Ku Dar User</button>
     </div>
     <div>
@@ -2503,7 +2538,18 @@ function renderSettingsUsers(){
       <label class="form-lbl">Label (Magaca)</label>
       <input id="edit-user-label" class="form-input" placeholder="Magaca"/>
       <label class="form-lbl">Role</label>
-      <select id="edit-user-role" class="form-select">${roleOpts}</select>
+      <select id="edit-user-role" class="form-select" onchange="toggleEditUserFaracSection(this.value)">${roleOpts}</select>
+      <div id="edit-user-farac-section" style="display:none;margin-bottom:14px;">
+        <label class="form-lbl" style="margin-bottom:8px;">Faracyada u oggolow ✓</label>
+        ${Object.keys(FARAC_COLORS).map(k=>`
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1.5px solid #e2e8f0;margin-bottom:7px;cursor:pointer;transition:.15s;background:#f8fafc;" onclick="this.style.borderColor=this.querySelector('input').checked?'#e2e8f0':'${FARAC_COLORS[k]}';this.style.background=this.querySelector('input').checked?'#f8fafc':'${FARAC_COLORS[k]}18'">
+          <input type="checkbox" name="edit-user-farac" value="${k}" style="width:16px;height:16px;accent-color:${FARAC_COLORS[k]};cursor:pointer;flex-shrink:0;"/>
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#1e293b;">
+            <span style="width:10px;height:10px;border-radius:50%;background:${FARAC_COLORS[k]};display:inline-block;flex-shrink:0;"></span>
+            ${FARAC_LABELS[k]}
+          </span>
+        </label>`).join("")}
+      </div>
       <div style="display:flex;gap:10px;margin-top:6px">
         <button class="btn-cancel" style="flex:1" onclick="closeEditUser()">❌ Jooji</button>
         <button class="btn-confirm" style="flex:1;background:#1565c0;color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;" onclick="saveEditUser()">💾 Keydi</button>
@@ -2952,14 +2998,30 @@ function resetFarac(key){
 }
 
 // ── USER MANAGEMENT ───────────────────────
+function toggleNewUserFaracSection(val){
+  const sec = document.getElementById("new-user-farac-section");
+  if(sec) sec.style.display = (val==="farac") ? "block" : "none";
+}
+function toggleEditUserFaracSection(val){
+  const sec = document.getElementById("edit-user-farac-section");
+  if(sec) sec.style.display = (val==="farac") ? "block" : "none";
+}
 function addUser(){
   const username = (document.getElementById("new-user-name")?.value||"").trim().toLowerCase();
   const password = (document.getElementById("new-user-pass")?.value||"").trim();
   const label    = (document.getElementById("new-user-label")?.value||"").trim();
-  const role     = document.getElementById("new-user-role")?.value || "sare";
+  const roleVal  = document.getElementById("new-user-role")?.value || "farac";
   if(!username || !password){ showToast("⚠️ Username iyo Password buuxi","warning"); return; }
   if(USERS[username]){ showToast("⚠️ Username horey u jira","warning"); return; }
-  USERS[username] = {password, role, label: label||username};
+  let role, faracs;
+  if(roleVal==="maamul"){ role="maamul"; faracs=Object.keys(FARAC_COLORS); }
+  else if(roleVal==="kormeere"){ role="kormeere"; faracs=Object.keys(FARAC_COLORS); }
+  else {
+    faracs = Array.from(document.querySelectorAll('input[name="new-user-farac"]:checked')).map(cb=>cb.value);
+    if(!faracs.length){ showToast("⚠️ Ugu yaraan hal farac dooro","warning"); return; }
+    role = faracs.length===1 ? faracs[0] : "farac";
+  }
+  USERS[username] = {password, role, faracs, label: label||username};
   saveUsersToFb();
   showToast(`✅ User "${username}" waa la abuuray`);
   renderContent();
@@ -2987,7 +3049,22 @@ function openEditUser(username){
   document.getElementById("edit-user-pass").value = "";
   document.getElementById("edit-user-label").value = u.label||"";
   const roleEl = document.getElementById("edit-user-role");
-  if(roleEl) roleEl.value = u.role;
+  // Determine the roleVal for the select
+  const isStandardRole = ["maamul","kormeere"].includes(u.role);
+  const roleVal = isStandardRole ? u.role : "farac";
+  if(roleEl){ roleEl.value = roleVal; toggleEditUserFaracSection(roleVal); }
+  // Restore farac checkboxes
+  const faracs = u.faracs || (isStandardRole ? [] : [u.role]);
+  document.querySelectorAll('input[name="edit-user-farac"]').forEach(cb=>{
+    const checked = faracs.includes(cb.value);
+    cb.checked = checked;
+    const lbl = cb.closest("label");
+    if(lbl){
+      const color = FARAC_COLORS[cb.value]||"#888";
+      lbl.style.borderColor = checked ? color : "#e2e8f0";
+      lbl.style.background = checked ? color+"18" : "#f8fafc";
+    }
+  });
   const modal = document.getElementById("edit-user-modal");
   if(modal) modal.style.display = "flex";
 }
@@ -3000,18 +3077,25 @@ function saveEditUser(){
   const newName = (document.getElementById("edit-user-name").value||"").trim().toLowerCase();
   const newPass = (document.getElementById("edit-user-pass").value||"").trim();
   const newLabel = (document.getElementById("edit-user-label").value||"").trim();
-  const newRole = document.getElementById("edit-user-role").value;
+  const roleVal = document.getElementById("edit-user-role").value;
   if(!newName){ showToast("⚠️ Username buuxi","warning"); return; }
   if(newName !== origName && USERS[newName]){ showToast("⚠️ Username cusub horaan u jiray","warning"); return; }
+  let newRole, newFaracs;
+  if(roleVal==="maamul"){ newRole="maamul"; newFaracs=Object.keys(FARAC_COLORS); }
+  else if(roleVal==="kormeere"){ newRole="kormeere"; newFaracs=Object.keys(FARAC_COLORS); }
+  else {
+    newFaracs = Array.from(document.querySelectorAll('input[name="edit-user-farac"]:checked')).map(cb=>cb.value);
+    if(!newFaracs.length){ showToast("⚠️ Ugu yaraan hal farac dooro","warning"); return; }
+    newRole = newFaracs.length===1 ? newFaracs[0] : "farac";
+  }
   const updatedUser = {
     ...USERS[origName],
     role: newRole,
+    faracs: newFaracs,
     label: newLabel || newName,
   };
   if(newPass) updatedUser.password = newPass;
-  if(newName !== origName){
-    delete USERS[origName];
-  }
+  if(newName !== origName){ delete USERS[origName]; }
   USERS[newName] = updatedUser;
   saveUsersToFb();
   closeEditUser();
