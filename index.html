@@ -1702,12 +1702,12 @@ function renderBaxayaashaPanel(fd, calc, isLocked, faracKey){
         </select>`
       }</td>
       <td>${isKormeere
-        ? `<span style="display:inline-block;padding:4px 9px;border-radius:6px;font-size:12px;font-weight:700;background:${b.bixiyey==="haa"?"#ecfdf5":"#fef2f2"};color:${b.bixiyey==="haa"?"#059669":"#dc2626"};border:1px solid ${b.bixiyey==="haa"?"#a7f3d0":"#fca5a5"};">${b.bixiyey==="haa"?"✅ Bixiyey":b.bixiyey==="maya"?"❌ Kama bixin":"—"}</span>`
+        ? `<span style="display:inline-block;padding:4px 9px;border-radius:6px;font-size:12px;font-weight:700;background:${b.bixiyey==="haa"?"#ecfdf5":"#fef2f2"};color:${b.bixiyey==="haa"?"#059669":"#dc2626"};border:1px solid ${b.bixiyey==="haa"?"#a7f3d0":"#fca5a5"};">${b.bixiyey==="haa"?"✅ Bixiyey":b.bixiyey==="maya"?"❌ Ma bixin":"—"}</span>`
         : `<select class="inp-cell" style="width:110px" ${isLocked?"disabled":""}
           onchange="updateBaxay('${faracKey}',${i},'bixiyey',this.value)">
           <option value="">-- Dooro --</option>
           <option value="haa" ${b.bixiyey==="haa"?"selected":""}>✅ Bixiyey</option>
-          <option value="maya" ${b.bixiyey==="maya"?"selected":""}>❌ Kama bixin</option>
+          <option value="maya" ${b.bixiyey==="maya"?"selected":""}>❌ Ma bixin</option>
         </select>`
       }</td>
       <td>
