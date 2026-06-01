@@ -682,7 +682,7 @@ function L(key){ return (LUUQADAHA[currentLang]||LUUQADAHA.so)[key] || key; }
 
 function emptyFasal(name, faracKey, nooca){
   const q = (defaultQiimaha && defaultQiimaha[faracKey]) ? defaultQiimaha[faracKey] : 13;
-  return {magaca:name,nooca:nooca||"caadi",tiradaBixisay:0,qiimaha:q,lacagtaSooHormartay:0,lacagtaDhimanayd:0,lacagtaBishatanHormartay:0,tiradaAanBixin:0,lacagtaAanBixin:0,scholarship:0,freeStudents:0,ardaydaCusub:0,ardaydaBaxday:0};
+  return {magaca:name,nooca:nooca||"caadi",tiradaBixisay:0,qiimaha:q,lacagtaSooHormartay:0,lacagtaDhimanayd:0,lacagtaBishatanHormartay:0,tiradaAanBixin:0,lacagtaAanBixin:0,scholarship:0,freeStudents:0,ardaydaCusub:0,ardaydaBaxday:0,discount:0};
 }
 function buildInitFarac(){
   const d={};
@@ -694,7 +694,7 @@ function buildInitFarac(){
   return d;
 }
 function calcFarac(fd){
-  let tB=0,tL=0,tH=0,tHTiro=0,tD=0,tBH=0,tAB=0,tLAB=0,tS=0,tF=0,tCusub=0,tBaxday=0;
+  let tB=0,tL=0,tH=0,tHTiro=0,tD=0,tBH=0,tAB=0,tLAB=0,tS=0,tF=0,tCusub=0,tBaxday=0,tDiscount=0;
   // Caadi (non-bas) totals — tirada kolomyada: bas kuma biirto wadarta tirada
   let tB_w=0, tHTiro_w=0, tAB_w=0, tS_w=0, tF_w=0, tCusub_w=0, tBaxday_w=0;
   fd.fasalada.forEach(f=>{
@@ -711,6 +711,7 @@ function calcFarac(fd){
     tF    +=+(f.freeStudents||0);
     tCusub+=+(f.ardaydaCusub||0);
     tBaxday+=+(f.ardaydaBaxday||0);
+    tDiscount+=+(f.discount||0);
     // Wadarta tirada — bas fasalada kuma biirto kolomyada tirada
     if(!isBas){
       tB_w     +=+(f.tiradaBixisay||0);
@@ -724,7 +725,7 @@ function calcFarac(fd){
   });
   const kWadar=Object.values(fd.kharash).reduce((a,b)=>a+(+b),0);
   const xarooday=tL+tD+tBH;
-  const saafi=xarooday-(+fd.discount)-(+fd.lacagKhususi);
+  const saafi=xarooday-tDiscount-(+fd.lacagKhususi);
   // totalArdayda: bas fasalada tiradooda kuma jirto
   const totalArdayda=tB_w+tAB_w+tS_w+tF_w+tCusub_w+tHTiro_w;
   return {
@@ -739,7 +740,7 @@ function calcFarac(fd){
     totalFree:tF, totalFree_w:tF_w,
     totalCusub:tCusub, totalCusub_w:tCusub_w,
     totalBaxday:tBaxday, totalBaxday_w:tBaxday_w,
-    kharashWadar:kWadar, xarooday, saafi, totalArdayda
+    kharashWadar:kWadar, xarooday, saafi, totalArdayda, totalDiscount:tDiscount
   };
 }
 
@@ -1528,6 +1529,7 @@ function renderXisaabTab(fd, calc, isLocked, color){
         if(k==='lacagtaBishatanHormartay') return `<th style="background:#fff8e1!important;color:#e65100!important;font-weight:800!important">${FL(k)}</th>`;
         if(k==='ardaydaCusub') return `<th style="background:#e3f2fd!important;color:#1565c0!important;font-weight:700!important">${FL(k)}</th>`;
         if(k==='ardaydaBaxday') return `<th style="background:#fce4ec!important;color:#880e4f!important;font-weight:700!important">${FL(k)}</th>`;
+        if(k==='scholarship') return `<th style="background:#fff3e0!important;color:#e65100!important;font-weight:800!important">Discount ($)</th><th>${FL(k)}</th>`;
         return `<th>${FL(k)}</th>`;
       }).join("")}
       <th class="th-green">Wadarta Ardayda</th>
@@ -1544,7 +1546,7 @@ function renderXisaabTab(fd, calc, isLocked, color){
     });
 
   fasaladaSorted.forEach(({f, i_orig: i})=>{
-    const wL = +(f.tiradaBixisay||0) * +(f.qiimaha||0) + +(f.lacagtaDhimanayd||0) + +(f.lacagtaBishatanHormartay||0);
+    const wL = Math.max(0, +(f.tiradaBixisay||0) * +(f.qiimaha||0) + +(f.lacagtaDhimanayd||0) + +(f.lacagtaBishatanHormartay||0) - +(f.discount||0));
     const isBas = f.nooca === "bas";
     // Bas fasalada: tirada ardayda kuma biirto — kaliya lacagta
     const wA = isBas ? null : (+f.tiradaBixisay + +f.tiradaAanBixin + +f.scholarship + +f.freeStudents + +(f.ardaydaCusub||0) + +(f.lacagtaSooHormartay||0));
@@ -1554,6 +1556,8 @@ function renderXisaabTab(fd, calc, isLocked, color){
       ? `<td style="color:#cbd5e1;font-weight:600;font-size:13px;background:rgba(234,88,12,.04)">—</td>`
       : `<td class="td-green-bg">${wA}</td>`;
     html+=`<tr style="${rowBg}"><td style="${nameStyle}">${isBas?'🚌 ':''} ${f.magaca}</td>`;
+    // Discount column cell
+    const discountVal = +(f.discount||0);
     fields.forEach(field=>{
       const val = f[field] || 0;
       if(isKormeere){
@@ -1567,11 +1571,20 @@ function renderXisaabTab(fd, calc, isLocked, color){
         else if(field==="ardaydaBaxday") cellColor = "#9d174d";
         else if(field==="lacagtaSooHormartay") cellColor = "#059669";
         const prefix = (field==="lacagtaDhimanayd"||field==="lacagtaBishatanHormartay"||field==="lacagtaAanBixin") ? "$" : "";
+        // Insert discount cell before scholarship
+        if(field==="scholarship"){
+          html+=`<td><span style="display:inline-block;min-width:54px;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:700;color:#e65100;background:#fff3e014;border:1.5px solid #e6510030;font-family:'Space Grotesk',sans-serif;text-align:center;">$${discountVal.toLocaleString()}</span></td>`;
+        }
         html+=`<td><span style="display:inline-block;min-width:54px;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:700;color:${cellColor};background:${cellColor}14;border:1.5px solid ${cellColor}30;font-family:'Space Grotesk',sans-serif;text-align:center;">${prefix}${(+val).toLocaleString()}</span></td>`;
       } else {
+        // Insert discount cell before scholarship
+        if(field==="scholarship"){
+          html+=`<td><input class="inp-cell" type="number" min="0" value="${discountVal}" ${isLocked?"disabled":""} style="border-color:#fb923c;" onchange="updateFasal('${activeFarac}',${i},'discount',this.value)"/></td>`;
+        }
         html+=`<td><input class="inp-cell" type="number" value="${val}" ${isLocked?"disabled":""} onchange="updateFasal('${activeFarac}',${i},'${field}',this.value)"/></td>`;
       }
     });
+    // Discount column already inserted before scholarship above
     html+=`${ardaydaCell}<td class="td-blue-bg">$${wL.toLocaleString()}</td></tr>`;
   });
 
@@ -1584,6 +1597,7 @@ function renderXisaabTab(fd, calc, isLocked, color){
     <td class="td-green">$${calc.totalBishatanHormartay.toLocaleString()}</td>
     <td class="td-red">${calc.totalAanBixin_w}</td>
     <td class="td-red">$${calc.totalLacagAanBixin.toLocaleString()}</td>
+    <td style="color:#e65100;font-weight:700">$${calc.totalDiscount.toLocaleString()}</td>
     <td>${calc.totalScholarship_w}</td>
     <td>${calc.totalFree_w}</td>
     <td style="color:#1565c0;font-weight:700">${calc.totalCusub_w}</td>
@@ -1614,8 +1628,8 @@ function renderXisaabTab(fd, calc, isLocked, color){
       <div class="discount-row">
         <span style="color:#555;font-size:13px">Qiima Dhimis (Discount)</span>
         ${isKormeere
-          ? `<span style="display:inline-block;padding:6px 13px;border:1.5px solid #bfdbfe;border-radius:7px;font-size:14px;font-weight:700;color:#1565c0;background:#eff6ff;font-family:'Space Grotesk',sans-serif;">$${(+(fd.discount||0)).toLocaleString()}</span>`
-          : `<input class="discount-inp" type="number" value="${fd.discount}" ${isLocked?"disabled":""} onchange="updateMeta('${activeFarac}','discount',this.value)"/>`
+          ? `<span style="display:inline-block;padding:6px 13px;border:1.5px solid #bfdbfe;border-radius:7px;font-size:14px;font-weight:700;color:#1565c0;background:#eff6ff;font-family:'Space Grotesk',sans-serif;">$${calc.totalDiscount.toLocaleString()}</span>`
+          : `<span style="display:inline-block;padding:6px 13px;border:1.5px solid #fb923c33;border-radius:7px;font-size:14px;font-weight:700;color:#e65100;background:#fff3e0;font-family:'Space Grotesk',sans-serif;">$${calc.totalDiscount.toLocaleString()}</span>`
         }
       </div>
       <div class="discount-row">
