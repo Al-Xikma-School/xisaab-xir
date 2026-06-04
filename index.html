@@ -2615,47 +2615,67 @@ function renderSettingsFasalada(){
 }
 
 function renderSettingsFasaladaNonMaamul(){
-  // Non-maamul: only add new class (no delete, no reset)
-  const myFarac = currentUser.role;
-  const color = FARAC_COLORS[myFarac];
-  const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
-  const fasalada = appData[myFarac]?.fasalada || [];
+  // Non-maamul: add + edit allowed, delete NOT allowed
+  const userFaracs = (currentUser.faracs || [currentUser.role]).filter(k => FARAC_COLORS[k]);
+  const myFarac = userFaracs[0] || currentUser.role;
 
-  const items = fasalada.length === 0
-    ? `<div style="color:#aaa;font-size:12px;padding:12px;text-align:center;background:rgba(${r},${g},${b},.04);border-radius:8px;border:1.5px dashed rgba(${r},${g},${b},.2)">Fasal ma jiro</div>`
-    : fasalada
-        .map((f, i) => ({f, i}))
-        .sort((a, b) => (a.f.nooca==="bas"?1:0) - (b.f.nooca==="bas"?1:0))
-        .map(({f, i}) => {
-        const isBas = f.nooca === "bas";
-        const alpha = i%2===0 ? .10 : .06;
-        const bgStyle = isBas
-          ? "background:linear-gradient(135deg,rgba(234,88,12,.14),rgba(251,146,60,.08));border-color:rgba(234,88,12,.4);"
-          : `background:rgba(${r},${g},${b},${alpha});border-color:rgba(${r},${g},${b},.25);`;
-        const nameColor = isBas ? "#ea580c" : color;
-        return `<div class="fasal-item-colored" style="${bgStyle}padding:9px 12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-            <span style="font-weight:700;color:${nameColor};font-size:13px;display:flex;align-items:center;gap:6px;">
-              <span style="width:6px;height:6px;border-radius:50%;background:${isBas?'#ea580c':color};display:inline-block;flex-shrink:0;opacity:.9"></span>
-              ${f.magaca}
-              ${isBas ? `<span class="fasal-bas-badge">🚌 Bas</span>` : ""}
-            </span>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="color:${isBas?'rgba(234,88,12,.65)':`rgba(${r},${g},${b},.65)`};font-size:11px;min-width:80px;font-weight:600">💵 Qiimaha:</span>
-            <input type="number" value="${f.qiimaha}" min="0"
-              style="width:85px;padding:4px 8px;border:1.5px solid ${isBas?'rgba(234,88,12,.35)':`rgba(${r},${g},${b},.3)`};border-radius:6px;font-size:13px;text-align:right;font-weight:700;background:rgba(255,255,255,.75);color:${nameColor};outline:none;"
-              onchange="updateFasalQiime('${myFarac}',${i},this.value)"/>
-            <span style="color:${isBas?'rgba(234,88,12,.65)':`rgba(${r},${g},${b},.65)`};font-size:12px;font-weight:600">$</span>
-          </div>
-        </div>`;
-      }).join("");
+  // Build farac selector options (for "Ku Dar" form)
+  const faracOpts = userFaracs.map(k=>`<option value="${k}">${FARAC_LABELS[k]||k}</option>`).join("");
+
+  // Build fasalada sections for each accessible farac
+  const fasaladaSections = userFaracs.map(faracKey => {
+    const color = FARAC_COLORS[faracKey];
+    const r = parseInt(color.slice(1,3),16), g = parseInt(color.slice(3,5),16), b = parseInt(color.slice(5,7),16);
+    const fasalada = appData[faracKey]?.fasalada || [];
+
+    const items = fasalada.length === 0
+      ? `<div style="color:#aaa;font-size:12px;padding:12px;text-align:center;background:rgba(${r},${g},${b},.04);border-radius:8px;border:1.5px dashed rgba(${r},${g},${b},.2)">Fasal ma jiro</div>`
+      : fasalada
+          .map((f, i) => ({f, i}))
+          .sort((a, b) => (a.f.nooca==="bas"?1:0) - (b.f.nooca==="bas"?1:0))
+          .map(({f, i}) => {
+          const isBas = f.nooca === "bas";
+          const alpha = i%2===0 ? .10 : .06;
+          const bgStyle = isBas
+            ? "background:linear-gradient(135deg,rgba(234,88,12,.14),rgba(251,146,60,.08));border-color:rgba(234,88,12,.4);"
+            : `background:rgba(${r},${g},${b},${alpha});border-color:rgba(${r},${g},${b},.25);`;
+          const nameColor = isBas ? "#ea580c" : color;
+          return `<div class="fasal-item-colored" style="${bgStyle}padding:9px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <span style="font-weight:700;color:${nameColor};font-size:13px;display:flex;align-items:center;gap:6px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:${isBas?'#ea580c':color};display:inline-block;flex-shrink:0;opacity:.9"></span>
+                ${f.magaca}
+                ${isBas ? `<span class="fasal-bas-badge">🚌 Bas</span>` : ""}
+              </span>
+              <button style="background:rgba(255,255,255,.7);border:1px solid rgba(59,130,246,.35);color:#2563eb;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:700;" onclick="openEditFasalNonMaamul('${faracKey}',${i})">✏️ Edit</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="color:${isBas?'rgba(234,88,12,.65)':`rgba(${r},${g},${b},.65)`};font-size:11px;min-width:80px;font-weight:600">💵 Qiimaha:</span>
+              <input type="number" value="${f.qiimaha}" min="0"
+                style="width:85px;padding:4px 8px;border:1.5px solid ${isBas?'rgba(234,88,12,.35)':`rgba(${r},${g},${b},.3)`};border-radius:6px;font-size:13px;text-align:right;font-weight:700;background:rgba(255,255,255,.75);color:${nameColor};outline:none;"
+                onchange="updateFasalQiime('${faracKey}',${i},this.value)"/>
+              <span style="color:${isBas?'rgba(234,88,12,.65)':`rgba(${r},${g},${b},.65)`};font-size:12px;font-weight:600">$</span>
+            </div>
+          </div>`;
+        }).join("");
+
+    return `<div style="background:rgba(${r},${g},${b},.04);border-radius:14px;padding:14px 16px;border:1.5px solid rgba(${r},${g},${b},.18);margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;box-shadow:0 0 0 3px rgba(${r},${g},${b},.2)"></span>
+        <span style="font-weight:800;color:${color};font-size:13px;">${FARAC_LABELS[faracKey]}</span>
+        <span style="background:rgba(${r},${g},${b},.15);color:${color};border-radius:8px;padding:1px 7px;font-size:10px;font-weight:800;">${fasalada.length} fasal</span>
+      </div>
+      <div class="fasal-list-colored">${items}</div>
+    </div>`;
+  }).join("");
 
   return `
   <div>
     <div class="settings-grid">
       <div>
         <h4 style="color:#1a3a5c;margin-bottom:14px">➕ Ku Dar Fasal Cusub</h4>
+        ${userFaracs.length > 1 ? `<label class="form-lbl">Faracka</label>
+        <select id="new-fasal-farac" class="form-select">${faracOpts}</select>` : `<input type="hidden" id="new-fasal-farac" value="${myFarac}"/>`}
         <label class="form-lbl">Nooca Fasalka</label>
         <select id="new-fasal-nooc" class="form-select" style="margin-bottom:14px">
           <option value="caadi">🏫 Fasal Caadi</option>
@@ -2671,20 +2691,14 @@ function renderSettingsFasaladaNonMaamul(){
         <h4 style="color:#1a3a5c;margin-bottom:8px">ℹ️ Tilmaan</h4>
         <p style="color:#64748b;font-size:12px;line-height:1.7;background:#f8fafc;border-radius:9px;padding:12px 14px;border:1px solid #e2e8f0">
           Fasalada cusub waxay u hooseeyan doontaa liiska hoose.<br>
-          Qiimaha waxaad ka bedeli kartaa meesha ku habboon.
+          Waxaad sidoo kale <b>✏️ edit</b> garayn kartaa magaca, nooca iyo qiimaha.<br>
+          Tirida fasalada waxay u baahan tahay maamulka.
         </p>
       </div>
     </div>
 
     <div class="settings-fasal-section">
-      <div style="background:rgba(${r},${g},${b},.04);border-radius:14px;padding:14px 16px;border:1.5px solid rgba(${r},${g},${b},.18);">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;box-shadow:0 0 0 3px rgba(${r},${g},${b},.2)"></span>
-          <span style="font-weight:800;color:${color};font-size:13px;">${FARAC_LABELS[myFarac]}</span>
-          <span style="background:rgba(${r},${g},${b},.15);color:${color};border-radius:8px;padding:1px 7px;font-size:10px;font-weight:800;">${fasalada.length} fasal</span>
-        </div>
-        <div class="fasal-list-colored">${items}</div>
-      </div>
+      ${fasaladaSections}
     </div>
   </div>`;
 }
@@ -2692,8 +2706,9 @@ function addFasalNonMaamul(){
   const nameEl = document.getElementById("new-fasal-name");
   const qiimeEl = document.getElementById("new-fasal-qiime");
   const noocEl  = document.getElementById("new-fasal-nooc");
+  const faracEl = document.getElementById("new-fasal-farac");
   if(!nameEl || !nameEl.value.trim()) return;
-  const farac = currentUser.role;
+  const farac = (faracEl && faracEl.value) ? faracEl.value : currentUser.role;
   const name = nameEl.value.trim();
   const nooca = noocEl ? noocEl.value : "caadi";
   const newFasal = emptyFasal(name, farac, nooca);
@@ -3500,6 +3515,11 @@ function saveEditFasal(){
   closeEditFasal();
   showToast(`✅ Fasalka "${name}" waa la cusboonaysiiyey`);
   renderAll();
+}
+
+// Shaqaalaha: edit fasalka PIN la'aan (tir ma ogola)
+function openEditFasalNonMaamul(faracKey, idx){
+  _openEditFasalInner(faracKey, idx);
 }
 
 // ── QIIMAHA / LANG SETTINGS ───────────────
