@@ -883,10 +883,10 @@ function doLogin(){
   if(usr && usr.password===p){
     currentUser = {...usr, username:u};
     document.getElementById("login-err").style.display="none";
+    // Set activeFarac: use first farac from faracs array if available
     const userFaracs = usr.faracs || (["maamul","kormeere"].includes(usr.role) ? Object.keys(FARAC_COLORS) : [usr.role]);
     activeFarac = (["maamul","kormeere"].includes(usr.role)) ? "sare" : (userFaracs[0]||"sare");
     activeTab = "xisaab";
-    try{ localStorage.setItem("da_session", JSON.stringify({username:u})); }catch{}
     document.getElementById("login-page").style.display="none";
     document.getElementById("app-page").classList.add("show");
     document.getElementById("header-user-label").textContent = "👤 "+(usr.label||u);
@@ -898,32 +898,12 @@ function doLogin(){
 }
 function doLogout(){
   clearTimeout(sessionTimer);
-  try{ localStorage.removeItem("da_session"); }catch{}
   currentUser=null; activeFarac=null; activeTab="xisaab";
   document.getElementById("app-page").classList.remove("show");
   document.getElementById("login-page").style.display="flex";
   document.getElementById("inp-user").value="";
   document.getElementById("inp-pass").value="";
   applyLangToLogin();
-}
-function restoreSession(){
-  try{
-    const saved = localStorage.getItem("da_session");
-    if(!saved) return false;
-    const {username:u} = JSON.parse(saved);
-    const usr = USERS[u];
-    if(!usr){ localStorage.removeItem("da_session"); return false; }
-    currentUser = {...usr, username:u};
-    const userFaracs = usr.faracs || (["maamul","kormeere"].includes(usr.role) ? Object.keys(FARAC_COLORS) : [usr.role]);
-    activeFarac = (["maamul","kormeere"].includes(usr.role)) ? "sare" : (userFaracs[0]||"sare");
-    activeTab = "xisaab";
-    document.getElementById("login-page").style.display="none";
-    document.getElementById("app-page").classList.add("show");
-    document.getElementById("header-user-label").textContent = "👤 "+(usr.label||u);
-    resetSessionTimer();
-    renderAll();
-    return true;
-  }catch{ return false; }
 }
 // ── PASSWORD SHOW/HIDE ────────────────────
 function togglePassView(){
@@ -940,8 +920,8 @@ function togglePassView(){
   }
 }
 
-// ── SESSION EXPIRY (disabled - 24 saacadood) ──
-const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours (auto-lock disabled)
+// ── SESSION EXPIRY (10 daqiiqo maqnaansho) ──
+const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 let sessionTimer = null;
 
 function resetSessionTimer(){
@@ -3808,8 +3788,6 @@ async function appInit(){
   }catch{ appData=buildInitFarac(); }
   finally{ setFbLoading(false); }
   startListener(currentBisha);
-  // Haddii refresh la sameeyo, dib u soo celi session-ka localStorage
-  restoreSession();
 }
 
 if(window._fbReady){
