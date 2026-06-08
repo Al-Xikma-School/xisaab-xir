@@ -1622,7 +1622,7 @@ function renderXisaabTab(fd, calc, isLocked, color){
               <input class="inp-cell" type="number" min="0" value="${val}" ${isLocked?"disabled":""} style="width:58px;pointer-events:${isLocked?'none':'auto'};"
                 oninput="if(+this.value<0)this.value=0;"
                 onchange="updateFasal('${activeFarac}',${i},'lacagtaSooHormartay',this.value);if(+this.value<=0){updateFasal('${activeFarac}',${i},'lacagtaHormarLacag',0);}else if(!${isLocked})openHormarLacagModal('${activeFarac}',${i});" />
-              ${lacagVal>0?`<span style="font-size:10px;color:#059669;font-weight:700;font-family:'Space Grotesk',sans-serif;">$${lacagVal.toLocaleString()}</span>`:'<span style="font-size:9px;color:#94a3b8;">lacag gali</span>'}
+              ${lacagVal>0?`<span style="font-size:10px;color:#059669;font-weight:700;font-family:'Space Grotesk',sans-serif;">$${lacagVal.toLocaleString()}</span>`:'<span style="font-size:9px;color:#94a3b8;"></span>'}
             </div>
           </td>`;
         } else {
