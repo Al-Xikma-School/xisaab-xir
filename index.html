@@ -920,8 +920,8 @@ function togglePassView(){
   }
 }
 
-// ── SESSION EXPIRY (10 daqiiqo maqnaansho) ──
-const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+// ── SESSION EXPIRY (disabled - 24 saacadood) ──
+const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours (auto-lock disabled)
 let sessionTimer = null;
 
 function resetSessionTimer(){
