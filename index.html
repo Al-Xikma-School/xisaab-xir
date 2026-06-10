@@ -1704,14 +1704,12 @@ function renderXisaabTab(fd, calc, isLocked, color){
         ${buildXisaabXirFarqiHTML(+(fd.lacagAkoonJiiday||0), calc.saafi)}
       </div>
       <div style="margin-top:14px">
-        <a
-          href="http://secadmin.lms.so/#/schools/add-marge"
-          target="_blank"
-          rel="noopener noreferrer"
-          style="display:block;width:100%;padding:12px;background:linear-gradient(135deg,#1565c0,#3b82f6);color:#fff;text-align:center;border-radius:10px;font-size:14px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(21,101,192,.3);transition:.2s;"
+        <button
+          onclick="window.location.href='http://secadmin.lms.so/#/schools/add-marge'"
+          style="display:block;width:100%;padding:12px;background:linear-gradient(135deg,#1565c0,#3b82f6);color:#fff;text-align:center;border-radius:10px;font-size:14px;font-weight:700;font-family:Plus Jakarta Sans,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(21,101,192,.3);transition:.2s;cursor:pointer;border:none;"
           onmouseover="this.style.opacity='.88'"
           onmouseout="this.style.opacity='1'"
-        >✅ Xaqiiji Xisaab Xirka</a>
+        >✅ Xaqiiji Xisaab Xirka</button>
       </div>
     </div>
     <div class="panel">
@@ -2309,8 +2307,18 @@ function savePDF(){
   const blob = new Blob([html], {type:"text/html;charset=utf-8"});
   const url = URL.createObjectURL(blob);
 
-  const win = window.open(url, "_blank");
-  if(!win){
+  // WebIntoApp: use iframe print instead of window.open
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  iframe.contentWindow.focus();
+  iframe.contentWindow.print();
+  setTimeout(()=>{ document.body.removeChild(iframe); URL.revokeObjectURL(url); }, 2000);
+  const win = null;
+  if(false){
     showToast("⚠️ Popup la xidhay — browser-ka ogolow popup-yada","warning");
     URL.revokeObjectURL(url);
     return;
@@ -3740,9 +3748,7 @@ async function openSubmitModal(key){
   document.getElementById("modal-body").textContent = `${L("modal_submit_body")} ${FARAC_LABELS[key]}? ${L("modal_submit_body2")}`;
   const btn = document.getElementById("modal-confirm-btn");
   btn.textContent = L("btn_gudbi"); btn.style.background="#1565c0";
-  btn.href = "http://secadmin.lms.so/#/schools/add-marge";
-  btn.target = "_blank";
-  btn.rel = "noopener noreferrer";
+  btn.onclick = function(){ window.location.href = 'http://secadmin.lms.so/#/schools/add-marge'; };
   document.querySelector(".btn-cancel").textContent = L("btn_jooji");
   document.getElementById("modal-overlay").classList.add("show");
 }
