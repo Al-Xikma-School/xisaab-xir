@@ -698,10 +698,13 @@ function calcFarac(fd){
   let tB=0,tL=0,tH=0,tHTiro=0,tD=0,tBH=0,tAB=0,tLAB=0,tS=0,tF=0,tCusub=0,tBaxday=0,tDiscount=0,tSaayid=0;
   // Caadi (non-bas) totals — tirada kolomyada: bas kuma biirto wadarta tirada
   let tB_w=0, tHTiro_w=0, tAB_w=0, tS_w=0, tF_w=0, tCusub_w=0, tBaxday_w=0;
+  let tL_caadi=0, tL_bas=0;
   fd.fasalada.forEach(f=>{
     const isBas = f.nooca === "bas";
     tB    +=+(f.tiradaBixisay||0);
     tL    +=+(f.tiradaBixisay||0) * +(f.qiimaha||0);
+    if(isBas){ tL_bas +=+(f.tiradaBixisay||0)*+(f.qiimaha||0); }
+    else      { tL_caadi+=+(f.tiradaBixisay||0)*+(f.qiimaha||0); }
     tHTiro+=+(f.lacagtaSooHormartay||0);
     tH    +=+(f.lacagtaHormarLacag||0);
     tD    +=+(f.lacagtaDhimanayd||0);
@@ -726,6 +729,9 @@ function calcFarac(fd){
     }
   });
   const kWadar=Object.values(fd.kharash).reduce((a,b)=>a+(+b),0);
+  const kDareewalada=+(fd.kharash.dareewalada||0);
+  // Lacagta basaska lagu kabay: dakhliga bas - kharashka dareewalada
+  const basKabid=tL_bas-kDareewalada;
   const xarooday=tL+tD+tBH+tSaayid;
   const saafi=xarooday-tDiscount;
   // totalArdayda: bas fasalada tiradooda kuma jirto
@@ -742,7 +748,7 @@ function calcFarac(fd){
     totalFree:tF, totalFree_w:tF_w,
     totalCusub:tCusub, totalCusub_w:tCusub_w,
     totalBaxday:tBaxday, totalBaxday_w:tBaxday_w,
-    kharashWadar:kWadar, xarooday, saafi, totalArdayda, totalDiscount:tDiscount, totalSaayid:tSaayid
+    kharashWadar:kWadar, xarooday, saafi, totalArdayda, totalDiscount:tDiscount, totalSaayid:tSaayid, basKabidCard:Math.max(0,kDareewalada-tL_bas), basKabidShow:(kDareewalada>tL_bas)
   };
 }
 
@@ -1455,8 +1461,8 @@ function renderFaracDetail(){
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
     ${statCardSm(L("lbl_ardayda_wadar"),calc.totalArdayda,"👥",color)}
     ${statCardSm(L("lbl_bixisay"),calc.totalBixisay_w,"✅","#0d6e4f")}
-    ${statCardSm(L("lbl_xarooday"),"$"+calc.xarooday.toLocaleString(),"💰","#1565c0")}
     ${statCardSm(L("lbl_saafi"),"$"+calc.saafi.toLocaleString(),"💵","#0d6e4f")}
+    ${statCardSm("🚌 Kabida Basaska","$"+calc.basKabidCard.toLocaleString(),"🚌",calc.basKabidShow?"#c62828":"#64748b")}
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
     ${(()=>{ const haraagCas=Math.max(0,(+(fd.lacagDhimanaydKore||0))-calc.totalDhimanayd); const lacagKuDhiman=calc.totalLacagAanBixin+haraagCas; return statCardSm("💸 Lacag Ku Dhiman","$"+lacagKuDhiman.toLocaleString(),"💸","#c62828"); })()}
@@ -2097,8 +2103,8 @@ function buildReportHTML(fd, calc, color){
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px">
     ${statCardSm(L("lbl_ardayda_wadar"),calc.totalArdayda,"👥",color)}
     ${statCardSm(L("lbl_bixisay"),calc.totalBixisay_w,"✅","#0d6e4f")}
-    ${statCardSm(L("lbl_xarooday"),"$"+calc.xarooday.toLocaleString(),"💰","#1565c0")}
     ${statCardSm(L("lbl_saafi"),"$"+calc.saafi.toLocaleString(),"💵","#0d6e4f")}
+    ${statCardSm("🚌 Kabida Basaska","$"+calc.basKabidCard.toLocaleString(),"🚌",calc.basKabidShow?"#c62828":"#64748b")}
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
     ${(()=>{ const haraagCas=Math.max(0,(+(fd.lacagDhimanaydKore||0))-calc.totalDhimanayd); const lacagKuDhiman=calc.totalLacagAanBixin+haraagCas; return statCardSm("💸 Lacag Ku Dhiman","$"+lacagKuDhiman.toLocaleString(),"💸","#c62828"); })()}
