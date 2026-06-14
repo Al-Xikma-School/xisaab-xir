@@ -1148,7 +1148,7 @@ function renderGuud(){
     s.haraagCas = Math.max(0,(+(fd.lacagDhimanaydKore||0)) - s.totalDhimanayd);
     s.lacagKuDhiman = s.totalLacagAanBixin + s.haraagCas;
   });
-  const grand = allStats.reduce((a,s)=>({saafi:a.saafi+s.saafi,kharashWadar:a.kharashWadar+s.kharashWadar,totalArdayda:a.totalArdayda+s.totalArdayda,totalCusub:a.totalCusub+s.totalCusub,totalBaxday:a.totalBaxday+s.totalBaxday,totalLacagAanBixin:a.totalLacagAanBixin+s.totalLacagAanBixin,totalLacagKuDhiman:a.totalLacagKuDhiman+s.lacagKuDhiman}),{saafi:0,kharashWadar:0,totalArdayda:0,totalCusub:0,totalBaxday:0,totalLacagAanBixin:0,totalLacagKuDhiman:0});
+  const grand = allStats.reduce((a,s)=>({saafi:a.saafi+s.saafi,kharashWadar:a.kharashWadar+s.kharashWadar,totalArdayda:a.totalArdayda+s.totalArdayda,totalCusub:a.totalCusub+s.totalCusub,totalBaxday:a.totalBaxday+s.totalBaxday,totalLacagAanBixin:a.totalLacagAanBixin+s.totalLacagAanBixin,totalLacagKuDhiman:a.totalLacagKuDhiman+s.lacagKuDhiman,basKabidCard:a.basKabidCard+s.basKabidCard}),{saafi:0,kharashWadar:0,totalArdayda:0,totalCusub:0,totalBaxday:0,totalLacagAanBixin:0,totalLacagKuDhiman:0,basKabidCard:0});
 
   const totalProfit = grand.saafi - grand.kharashWadar;
   let html=`
@@ -1164,7 +1164,7 @@ function renderGuud(){
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
     ${statCardSm(L("lbl_ardayda_wadar"),grand.totalArdayda,"👨‍🎓","#1a3a5c")}
-    ${statCardSm(L("lbl_lacag_saafi"),"$"+grand.saafi.toLocaleString(),"💵","#0d6e4f")}
+    ${statCardSm("🚌 Kabida Basaska","$"+grand.basKabidCard.toLocaleString(),"🚌",grand.basKabidCard>0?"#c62828":"#64748b")}
     ${statCardSm(L("lbl_kharash_guud"),"$"+grand.kharashWadar.toLocaleString(),"📤","#c62828")}
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
@@ -1321,7 +1321,7 @@ function renderGuud(){
           <div style="color:#991b1b;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px">📤 Kharash</div>
           <div style="color:#dc2626;font-size:16px;font-weight:800;margin-top:3px;font-family:'Space Grotesk',sans-serif">$${s.kharashWadar.toLocaleString()}</div>
         </div>
-        <div class="mini-stat"><div class="mini-stat-lbl">${L("lbl_xarooday")}</div><div class="mini-stat-val">$${s.xarooday.toLocaleString()}</div></div>
+        <div class="mini-stat"><div class="mini-stat-lbl">🚌 Kabida Basaska</div><div class="mini-stat-val" style="color:${s.basKabidShow?'#dc2626':'#64748b'}">$${s.basKabidCard.toLocaleString()}</div></div>
         <div class="mini-stat"><div class="mini-stat-lbl">💸 Lacag Ku Dhiman</div><div class="mini-stat-val" style="color:#dc2626">$${s.lacagKuDhiman.toLocaleString()}</div></div>
         <div class="mini-stat"><div class="mini-stat-lbl">🆕 Ardayda Cusub</div><div class="mini-stat-val" style="color:#1565c0">${s.totalCusub}</div></div>
         <div class="mini-stat"><div class="mini-stat-lbl">🚪 Ardayda Baxday</div><div class="mini-stat-val" style="color:#7b3f00">${s.totalBaxday}</div></div>
