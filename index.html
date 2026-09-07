@@ -703,7 +703,9 @@ function calcFarac(fd){
     const isBas = f.nooca === "bas";
     tB    +=+(f.tiradaBixisay||0);
     tL    +=+(f.tiradaBixisay||0) * +(f.qiimaha||0);
-    if(isBas){ tL_bas +=+(f.tiradaBixisay||0)*+(f.qiimaha||0); }
+    // Dakhliga saafiga ah ee safka (isla habka lagu muujiyo shaxda): tirada*qiimaha + hormar/saayid/dhimanayd - discount
+    const wRowRevenue = Math.max(0, +(f.tiradaBixisay||0) * +(f.qiimaha||0) + +(f.lacagtaDhimanayd||0) + +(f.lacagtaBishatanHormartay||0) + +(f.lacagtaSaayidka||0) - +(f.discount||0));
+    if(isBas){ tL_bas += wRowRevenue; }
     else      { tL_caadi+=+(f.tiradaBixisay||0)*+(f.qiimaha||0); }
     tHTiro+=+(f.lacagtaSooHormartay||0);
     tH    +=+(f.lacagtaHormarLacag||0);
@@ -748,7 +750,11 @@ function calcFarac(fd){
     totalFree:tF, totalFree_w:tF_w,
     totalCusub:tCusub, totalCusub_w:tCusub_w,
     totalBaxday:tBaxday, totalBaxday_w:tBaxday_w,
-    kharashWadar:kWadar, xarooday, saafi, totalArdayda, totalDiscount:tDiscount, totalSaayid:tSaayid, basKabidCard:Math.max(0,kDareewalada-tL_bas), basKabidShow:(kDareewalada>tL_bas)
+    kharashWadar:kWadar, xarooday, saafi, totalArdayda, totalDiscount:tDiscount, totalSaayid:tSaayid,
+    // Kabida Basaska (farac kastaa gooni u leeyahay): dakhliga fasalada basaska ee farackan
+    // laga jarayo kharashka dareewalada ee farackan kaliya. Haddii kharashku ka badan yahay
+    // dakhliga, farqiga ayaa la soo saaraa; haddii kale waa $0.
+    basKabidCard:Math.max(0,kDareewalada-tL_bas), basKabidShow:(kDareewalada>tL_bas)
   };
 }
 
